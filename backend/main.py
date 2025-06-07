@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes.sensor import router as sensor_router
-from routes.disease import router as disease_router
+
+from backend.routes.sensor import router as sensor_router
+from backend.routes.disease import router as disease_router
+from backend.routes.water import router as water_router  # 👈 new line
 
 app = FastAPI()
 
@@ -16,6 +18,7 @@ app.add_middleware(
 # Route registration
 app.include_router(sensor_router)
 app.include_router(disease_router)
+app.include_router(water_router)  # 👈 new line
 
 @app.get("/")
 def root():

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, UploadFile, File
-from model.leaf_predict import predict_leaf_disease
+from backend.model.leaf_predict import predict_leaf_disease
+
 
 router = APIRouter()
 
