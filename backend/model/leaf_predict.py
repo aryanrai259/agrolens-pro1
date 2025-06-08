@@ -4,35 +4,39 @@ import os
 API_KEY = os.getenv("KINDWISE_API_KEY")  # Store your API key in .env
 
 def predict_leaf_disease(image_path: str):
-    url = "https://api.plant.id/v2/health_assessment"
-
+   def encode_image(image_path):
     with open(image_path, "rb") as image_file:
-        files = {
-            "images": (image_path, image_file, "image/jpeg")
-        }
-        headers = {
-            "Api-Key": API_KEY
-        }
-        response = requests.post(url, headers=headers, files=files)
+        return base64.b64encode(image_file.read()).decode('utf-8')
 
-    if response.status_code != 200:
-        return {
-            "predicted_class": "Unknown",
-            "confidence": "0%",
-            "remedy": "Could not connect to Kindwise API."
-        }
+    client = Groq()
 
-    data = response.json()
-    if data.get("is_healthy"):
-        return {
-            "predicted_class": "Healthy",
-            "confidence": "100%",
-            "remedy": "No action needed."
-        }
+# Path to your local image file
+    base64_image = encode_image(image_path)
 
-    top = data["diseases"][0]
-    return {
-        "predicted_class": top["name"],
-        "confidence": f"{top['probability']*100:.1f}%",
-        "remedy": top.get("treatment", "No remedy provided.")
-    }
+    completion = client.chat.completions.create(
+    model="meta-llama/llama-4-scout-17b-16e-instruct",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "You will be given an image of a plant? Your task is to return its specie and tell if its' suffering from any disease. "
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{base64_image}"
+                    }
+                }
+            ]
+        }
+    ],
+    temperature=1,
+    max_completion_tokens=1024,
+    top_p=1,
+    stream=False,
+    stop=None,
+    )
+
+    return completion.choices[0].message.content
